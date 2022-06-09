@@ -3,137 +3,22 @@
 #include<iostream>
 #include <cmath>
 #include<vector>
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
+#include"shaderClass.h" 
+#include"Planet.h"
+//#include"Texture.h"
+
+
 
 #define _USE_MATH_DEFINES
-// Vertex Shader source code
-const char* vertexShaderSource = "#version 330 core\n"
-"in vec2 position;\n"
-"in vec3 color;\n"
-"out vec3 Color;\n"
-"void main()\n"
-"{\n"
-" Color = color;\n"
-" gl_Position = vec4(position, 0.0, 1.0);\n"
-"}\0";
-//Fragment Shader source code
-const char* fragmentShaderSource = "#version 330 core\n"
-"in vec3 Color;\n"
-"out vec4 outColor;\n"
-"void main()\n"
-"{\n"
-" outColor = vec4(Color, 1.0);\n"
-"}\n\0";
 
-class Planet {
-public:
-	float x, y, size, radius, angularVelocity, angle, r, g, b;
-	float dx, dy;
-	static float velocityFactor;
-	static std::vector<GLfloat>* global_vertices_vect;
-	std::vector<int> indices_vect;
+std::vector<GLfloat> vertices;
+std::vector<GLuint> indices;
 
-	Planet() {}
+const unsigned int width = 800, heigth = 800;
 
-	Planet(float size, float radius, float r, float g, float b) {
-		this->size = size;
-		this->angle = 0;
-		this->radius = radius;
-
-		float velocity = velocityFactor * pow(radius, -0.5f);
-		this->angularVelocity = velocity / radius;
-
-		this->r = r;
-		this->g = g;
-		this->b = b;
-
-		calculatePosition();
-	}
-
-	void generateGeometry(std::vector < GLuint>* global_indices = NULL, int steps = 20, std::vector<GLfloat>* global_vert = NULL) {
-		if (!global_indices) return;
-		if (!global_vert && !(this->global_vertices_vect)) return;
-		else if (this->global_vertices_vect) {
-			global_vert = this->global_vertices_vect;
-		}
-
-		if (!(this->global_vertices_vect)) this->global_vertices_vect = global_vert;
-
-		std::vector<float> current = { this->x, this->y + this->size }, nextStep = { 0,0 };
-		float pi = 2 * std::acos(0);
-		int indices_offset = global_vert->size() / 5;
-
-		//center
-		global_vert->push_back(this->x);
-		global_vert->push_back(this->y);
-		global_vert->push_back(this->r);
-		global_vert->push_back(this->g);
-		global_vert->push_back(this->b);
-
-		int center_vertex_index = indices_offset;
-		indices_offset++;
-		this->indices_vect.push_back(center_vertex_index);
-
-		//initial vertex
-		global_vert->push_back(current[0]);
-		global_vert->push_back(current[1]);
-		global_vert->push_back(this->r);
-		global_vert->push_back(this->g);
-		global_vert->push_back(this->b);
-		this->indices_vect.push_back(indices_offset);
-		int first_vertex_index = indices_offset;
-
-		for (int i = 0; i < steps - 1; i++) {
-
-
-			float angle = (i + 1) / (float)steps * 2 * pi;
-
-			nextStep[0] = this->x + std::sin(angle) * this->size;
-			nextStep[1] = this->y + std::cos(angle) * this->size;
-
-			global_vert->push_back(nextStep[0]);
-			global_vert->push_back(nextStep[1]);
-			global_vert->push_back(this->r);
-			global_vert->push_back(this->g);
-			global_vert->push_back(this->b);
-
-			this->indices_vect.push_back(indices_offset + 1);
-
-			global_indices->push_back(indices_offset); //current vertex index
-			global_indices->push_back(indices_offset + 1); // next vertex index
-			global_indices->push_back(center_vertex_index);
-
-			indices_offset++;
-			current.swap(nextStep);
-		}
-
-		global_indices->push_back(indices_offset); // n-th vertex index
-		global_indices->push_back(first_vertex_index); // 1st vertex index
-		global_indices->push_back(center_vertex_index); // center
-	}
-
-
-	void calculatePosition() {
-		float x_next = radius * cos(angle),
-			y_next = radius * sin(angle);
-
-		dx = x_next - x;
-		dy = y_next - y;
-
-		x = x_next;
-		y = y_next;
-	}
-
-	void move() {
-		angle += angularVelocity;
-
-		calculatePosition();
-
-		for (int i = 0; i < indices_vect.size(); i++) {
-			(*global_vertices_vect)[indices_vect[i] * 5] += dx;
-			(*global_vertices_vect)[indices_vect[i] * 5 + 1] += dy;
-		}
-	}
-};
 
 float Planet::velocityFactor = 0.001f;
 std::vector<GLfloat>* Planet::global_vertices_vect = NULL;
@@ -143,7 +28,7 @@ void drawCircle(GLfloat x, GLfloat y, GLfloat r) {
 	static const double max = 2 * 3.14;
 	glBegin(GL_LINE_LOOP);
 
-	for (double d = 0; d < max; d += inc) {
+	for (double d = 0; d < max; d += inc)  {
 		glVertex2f(cos(d) * r + x, sin(d) * r + y);
 	}
 	glEnd();
@@ -161,10 +46,11 @@ void drawCircleFULL(GLfloat x, GLfloat y, GLfloat r) {
 int main() {
 	// Initialize GLFW
 	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);       //informacje o wersji biblioteki
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-
-
-	GLFWwindow* window = glfwCreateWindow(800, 800, "Opengl-window", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, heigth, "Opengl-window", NULL, NULL);
 	// Error check if the window fails to create
 	if (window == NULL)
 	{
@@ -179,62 +65,6 @@ int main() {
 	//Load GLAD so it configures OpenGL
 	gladLoadGL();
 	// Specify the viewport of OpenGL in the Window
-	// 
-	// Vertex Shader source code
-	const char* vertexShaderSource = "#version 330 core\n"
-		"in vec2 position;\n"
-		"in vec3 color;\n"
-		"out vec3 Color;\n"
-		"void main()\n"
-		"{\n"
-		" Color = color;\n"
-		" gl_Position = vec4(position, 0.0, 1.0);\n"
-		"}\0";
-	//Fragment Shader source code
-	const char* fragmentShaderSource =
-		"#version 330 core\n"
-		"in vec3 Color;"
-		"out vec4 outColor;\n"
-		"void main()\n"
-		"{\n"
-		" outColor = vec4(Color, 1.0);\n"
-		"}\n\0";
-
-	// Utwórz obiekt Vertex Shader
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	// Po³¹cz istniej¹cy obiekt z napisan¹ wczeœniej implementacj¹ shadera
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	// Skompiluj gotowy kod
-	glCompileShader(vertexShader);
-
-	//status kompilacji shadera wierzcholkow
-	GLint vStatus;
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &vStatus);
-	if (vStatus == GL_TRUE) std::cout << "vStatus: GL_TRUE" << std::endl;
-
-	// Powtórz operacjê dla fragment shadera
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	//status kompilacji shadera fragmentow
-	GLint fStatus;
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &fStatus);
-	if (fStatus == GL_TRUE) std::cout << "fStatus: GL_TRUE" << std::endl;
-
-	// Utwórz program
-	GLuint shaderProgram = glCreateProgram();
-	// Pod³¹cz shadery pod program
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glBindFragDataLocation(shaderProgram, 0, "outColor");
-	glLinkProgram(shaderProgram);
-	// Usuñ niepotrzebne shadery
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	glUseProgram(shaderProgram);
-
 
 	std::vector<Planet> Planets_vector;
 	// Planet(size, radius, red, green, blue);
@@ -247,20 +77,6 @@ int main() {
 	Planets_vector.push_back(Planet(0.06f, 0.8f, 0.2f, 1.0f, 0.2f));
 	Planets_vector.push_back(Planet(0.05f, 0.9f, 0, 1.0f, 0));
 
-	/*const int indicesNumber = 3 * n;
-	const int verticesNumber = 5 * indicesNumber;
-
-	GLfloat vertices[verticesNumber];
-	GLuint indices[indicesNumber];
-
-	for (int i = 0; i < indicesNumber; i++) {
-		indices[i] = i;
-	}*/
-
-
-	std::vector<GLfloat> vertices;
-	std::vector<GLuint> indices;
-
 	Planet::global_vertices_vect = &vertices;
 
 	for (int i = 0; i < Planets_vector.size(); i++) {
@@ -268,40 +84,23 @@ int main() {
 		int a = Planets_vector[i].indices_vect.size();
 	}
 
-	GLuint VAO, VBO, EBO;
-	// Utwórz obiekty VBO, VAO i EBO, ka¿dy posiada jeden obiekt
+	Shader shaderProgram("default.vert", "default.frag");
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	VAO VAO1;
+	VAO1.Bind();
 
-	// Po³¹cz wierzcho³ki z bufforem wierzcho³ków
-	glBindVertexArray(VAO);
-	// Ustaw typ VBO
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// za³aduj przygotowane wierzcho³ki
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+	VBO VBO1(vertices.data(), sizeof(GLfloat) * vertices.size());
+	EBO EBO1(indices.data(), sizeof(GLuint) * indices.size());
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), indices.data(), GL_DYNAMIC_DRAW);
+	VAO1.LinkVBO(VBO1, 0, 1);
 
-	// Skonfiguruj format buffora, typ danych i d³ugoœæ
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
+	//VAO1.Unbind();
+	//VBO1.Unbind();
+	//EBO1.Unbind();
 
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(2 * sizeof(float)));
+	shaderProgram.Activate();
 
-	// Uruchom buffor
-	//glEnableVertexAttribArray(0);
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
-	//glBindVertexArray(0);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	// 
-	// In this case the viewport goes from x = 0, y = 0, to x = 800, y = 800
-	glViewport(0, 0, 800, 800);
+	glViewport(0, 0, width, heigth);
 
 	// Specify the color of the background
 	glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -313,8 +112,21 @@ int main() {
 	while (!glfwWindowShouldClose(window))
 	{
 		//glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-		glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+		VBO1.Bind();
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+		VBO1.Data(vertices.data(), sizeof(GLfloat) * vertices.size());
+		
+		drawCircleFULL(0.0, 0.0, 0.1);
+		drawCircle(0.0, 0.0, 0.2);
+		drawCircle(0.0, 0.0, 0.3);
+		drawCircle(0.0, 0.0, 0.4);
+		drawCircle(0.0, 0.0, 0.5);
+		drawCircle(0.0, 0.0, 0.6);
+		drawCircle(0.0, 0.0, 0.7);
+		drawCircle(0.0, 0.0, 0.8);
+		drawCircle(0.0, 0.0, 0.9);
+		
+		VBO1.Unbind();
 
 		for (int i = 0; i < Planets_vector.size(); i++) {
 			Planets_vector[i].move();
@@ -325,19 +137,11 @@ int main() {
 		// Wyczyœæ buffor I nadaj mu kolor
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		drawCircleFULL(0.0, 0.0, 0.1);
-		drawCircle(0.0, 0.0, 0.2);
-		drawCircle(0.0, 0.0, 0.3);
-		drawCircle(0.0, 0.0, 0.4);
-		drawCircle(0.0, 0.0, 0.5);
-		drawCircle(0.0, 0.0, 0.6);
-		drawCircle(0.0, 0.0, 0.7);
-		drawCircle(0.0, 0.0, 0.8);
-		drawCircle(0.0, 0.0, 0.9);
 
+		
 
-		// Wybierz, który shader bêdzie u¿ywany
-		glUseProgram(shaderProgram);
+		//VAO1.Bind();
+
 		//glBindVertexArray(VAO);
 		// Narysuj trójk¹t
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -348,10 +152,11 @@ int main() {
 		glfwPollEvents();
 	}
 
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
-	glDeleteProgram(shaderProgram);
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	shaderProgram.Delete();
+	
 	// Delete window before ending the program
 	glfwDestroyWindow(window);
 	// Terminate GLFW before ending the program
