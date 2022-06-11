@@ -69,5 +69,11 @@
     <None Include="default.vert">
       <Filter>Pliki zasobów</Filter>
     </None>
+    <None Include="light.vert">
+      <Filter>Pliki zasobów</Filter>
+    </None>
+    <None Include="light.frag">
+      <Filter>Pliki zasobów</Filter>
+    </None>
   </ItemGroup>
 </Project>
