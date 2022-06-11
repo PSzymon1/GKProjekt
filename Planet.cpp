@@ -15,7 +15,7 @@ Planet::Planet(float size, float radius, float r, float g, float b) {
 	calculatePosition();
 }
 
-void Planet::generateGeometry(std::vector < GLuint>* global_indices = NULL, int steps = 20, std::vector<GLfloat>* global_vert = NULL) {
+void Planet::generateGeometry(std::vector < GLuint>* global_indices, int steps, std::vector<GLfloat>* global_vert) {
 	if (!global_indices) return;
 	if (!global_vert && !(this->global_vertices_vect)) return;
 	else if (this->global_vertices_vect) {

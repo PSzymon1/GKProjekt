@@ -8,6 +8,7 @@
 #include"EBO.h"
 #include"shaderClass.h" 
 #include"Planet.h"
+#include"Camera.h"
 //#include"Texture.h"
 
 
@@ -171,8 +172,6 @@ int main() {
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
-
-
 	shaderProgram.Activate();
 
 	glViewport(0, 0, width, heigth);
@@ -184,25 +183,33 @@ int main() {
 	// Swap the back buffer with the front buffer
 	glfwSwapBuffers(window);
 
+	Camera camera(width, heigth, glm::vec3(2.f, 2.f, 2.0f));
+	
+	// Tells OpenGL which Shader Program we want to use
+	lightShader.Activate();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		//glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		VBO1.Bind();
-		//glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
-		VBO1.Data(vertices.data(), sizeof(GLfloat) * vertices.size());
+		
 
-		// Tells OpenGL which Shader Program we want to use
-		lightShader.Activate();
+
+		camera.Inputs(window);
 		// Export the camMatrix to the Vertex Shader of the light cube
 		camera.Matrix(lightShader, "camMatrix");
-		// Bind the VAO so OpenGL knows to use it
-		lightVAO.Bind();
-		// Draw primitives, number of indices, datatype of indices, index of indices
-		glDrawElements(GL_TRIANGLES, sizeof(lightIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
-
 
 		
-		drawCircleFULL(0.0, 0.0, 0.1);
+		// Bind the VAO so OpenGL knows to use it
+		lightVBO.Bind();
+		lightVAO.Bind();
+		// Draw primitives, number of indices, datatype of indices, index of indices
+		glDrawElements(GL_TRIANGLES, sizeof(lightIndices) /*/ sizeof(int)*/, GL_UNSIGNED_INT, 0);
+		lightVAO.Unbind();
+		lightVBO.Unbind();
+		
+		
+		
+		/*drawCircleFULL(0.0, 0.0, 0.1);
 		drawCircle(0.0, 0.0, 0.2);
 		drawCircle(0.0, 0.0, 0.3);
 		drawCircle(0.0, 0.0, 0.4);
@@ -210,9 +217,9 @@ int main() {
 		drawCircle(0.0, 0.0, 0.6);
 		drawCircle(0.0, 0.0, 0.7);
 		drawCircle(0.0, 0.0, 0.8);
-		drawCircle(0.0, 0.0, 0.9);
+		drawCircle(0.0, 0.0, 0.9);*/
 		
-		VBO1.Unbind();
+		//VBO1.Unbind();
 
 		for (int i = 0; i < Planets_vector.size(); i++) {
 			Planets_vector[i].move();
@@ -226,13 +233,20 @@ int main() {
 
 		
 
-		//VAO1.Bind();
 
 		//glBindVertexArray(VAO);
 		// Narysuj trójk¹t
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+		VAO1.Bind();
+		VBO1.Bind();
+		
+		//glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+		VBO1.Data(vertices.data(), sizeof(GLfloat) * vertices.size());
 		glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, (void*)(0 * sizeof(GLuint)));
+
+		VAO1.Unbind();
+		VBO1.Unbind();
 		// Odœwie¿ widok
 		glfwSwapBuffers(window);
 		glfwPollEvents();
