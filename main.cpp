@@ -113,27 +113,25 @@ int main() {
 		int a = Planets_vector[i].indices_vect.size();
 	}
 
+	// Generates Shader object using shaders default.vert and default.frag
 	Shader shaderProgram("default.vert", "default.frag");
-
+	// Generates Vertex Array Object and binds it
 	VAO VAO1;
 	VAO1.Bind();
-
+	// Generates Vertex Buffer Object and links it to vertices
 	VBO VBO1(vertices.data(), sizeof(GLfloat) * vertices.size());
+	// Generates Element Buffer Object and links it to indices
 	EBO EBO1(indices.data(), sizeof(GLuint) * indices.size());
-
 	VAO1.LinkVBO(VBO1, 0, 1);
-
 	// Links VBO attributes such as coordinates and colors to VAO
-	//VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);
-	//VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3 * sizeof(float)));
-	//VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-	//VAO1.LinkAttrib(VBO1, 3, 3, GL_FLOAT, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-
-
-	//VAO1.Unbind();
-	//VBO1.Unbind();
-	//EBO1.Unbind();
-
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 3, 3, GL_FLOAT, 11 * sizeof(float), (void*)(8 * sizeof(float)));
+	// Unbind all to prevent accidentally modifying them
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
 
 
 	// Shader for light cube
